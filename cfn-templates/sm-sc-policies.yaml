@@ -1,0 +1,68 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create a managed policy for AmazonSageMakerServiceCatalogProductsLaunchRole to launch an Feature Store ingestion product
+
+Outputs:
+  FSIngestionProductPolicyArn:
+    Description: Managed policy for AmazonSageMakerServiceCatalogProductsLaunchRole to launch an Feature Store ingestion product
+    Value: !Ref AmazonSageMakerServiceCatalogFSIngestionProductPolicy
+
+Resources:
+
+  AmazonSageMakerServiceCatalogFSIngestionProductPolicy:
+      Type: 'AWS::IAM::ManagedPolicy'
+      Properties:
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+            - Sid: FSIngestionPermissionIAM
+              Effect: Allow
+              Action:
+                - iam:CreateRole    
+                - iam:DeleteRole
+                - iam:PutRolePolicy
+                - iam:DeleteRolePolicy
+                - iam:DetachRolePolicy
+                - iam:AttachRolePolicy
+                - iam:GetRole
+                - iam:GetRolePolicy
+              Resource: !Sub 'arn:aws:iam::${AWS::AccountId}:*'
+            - Sid: FSIngestionPermissionS3
+              Effect: Allow
+              Action:
+                - s3:PutBucketOwnershipControls
+              Resource: 'arn:aws:s3:::sagemaker-*'
+            - Sid: FSIngestionPermissionPassRole
+              Effect: Allow
+              Action:
+                - 'iam:PassRole'
+              Resource:
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:role/*StartIngestionPipeline*'
+            - Sid: FSIngestionPermissionEvents
+              Effect: Allow
+              Action:
+                - 'events:DescribeRule'
+                - 'events:DeleteRule'
+                - 'events:EnableRule'
+                - 'events:PutRule'
+                - 'events:PutTargets'
+                - 'events:RemoveTargets'
+                - 'events:TagResource'
+                - 'events:UntagResource'
+              Resource:
+                - !Sub 'arn:aws:events:${AWS::Region}:${AWS::AccountId}:*'
+            - Sid: FSIngestionPermissionCloudTrail
+              Effect: Allow
+              Action:
+                - 'cloudtrail:CreateTrail'
+                - 'cloudtrail:DeleteTrail'
+                - 'cloudtrail:AddTags'
+                - 'cloudtrail:RemoveTags'
+                - 'cloudtrail:PutEventSelectors'
+                - 'cloudtrail:RemoveTags'
+                - 'cloudtrail:StartLogging'
+                - 'cloudtrail:StopLogging'
+              Resource:
+                - !Sub 'arn:aws:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/cloudtrail-sagemaker-*'

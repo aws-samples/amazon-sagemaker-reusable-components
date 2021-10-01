@@ -13,11 +13,11 @@ Parameters:
 Outputs:
   SMProjectSCPortfolioS3Uri:
     Description: S3 URI for SageMaker projects as Service Catalog portfolio deployment stack
-    Value: !Sub 'https://s3.${AWS::Region}.amazonaws.com/${S3BucketName}/amazon-sagemaker-demo/sm-project-sc-portfolio.yaml'
+    Value: !Sub 'https://s3.${AWS::Region}.amazonaws.com/${S3BucketName}/amazon-sagemaker-reusable-components/sm-project-sc-portfolio.yaml'
 
   SMProjectSCPortfolioDeployLink:
     Description: Link to open CloudFormation deployment of Service Catalog portfolio with SageMaker projects
-    Value: !Sub 'https://console.aws.amazon.com/cloudformation/home?region=${AWS::Region}#/stacks/new?templateURL=https://s3.${AWS::Region}.amazonaws.com/${S3BucketName}/amazon-sagemaker-demo/sm-project-sc-portfolio.yaml'
+    Value: !Sub 'https://console.aws.amazon.com/cloudformation/home?region=${AWS::Region}#/stacks/new?templateURL=https://s3.${AWS::Region}.amazonaws.com/${S3BucketName}/amazon-sagemaker-reusable-components/sm-project-sc-portfolio.yaml'
 
   StartBuildCLICommand:
     Description: CLI to start CodeBuild build
@@ -155,7 +155,7 @@ Resources:
             Value: !Ref AWS::Region
       Source:
         Type: S3
-        Location: !Sub '${S3BucketName}/amazon-sagemaker-demo/amazon-sagemaker-demo.zip'
+        Location: !Sub '${S3BucketName}/amazon-sagemaker-reusable-components/amazon-sagemaker-reusable-components.zip'
         BuildSpec: buildspec-package-cfn.yml
       LogsConfig:
         CloudWatchLogs:

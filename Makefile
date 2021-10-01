@@ -32,8 +32,8 @@ package: build
 
 zip:
 	echo "Zipping the source code"
-	rm -f amazon-sagemaker-demo.zip
-	zip -r amazon-sagemaker-demo.zip . -i "*.yaml" "*.yml" "*.sh"
+	rm -f amazon-sagemaker-reusable-components.zip
+	zip -r amazon-sagemaker-reusable-components.zip . -i "*.yaml" "*.yml" "*.sh"
 
 cfn_nag_scan: 
 	cfn_nag_scan --input-path $(CFN_TEMPLATE_DIR)

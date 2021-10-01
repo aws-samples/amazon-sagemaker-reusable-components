@@ -58,12 +58,12 @@ Resources:
         - Name: 'Automated Feature Transformation and Ingestion Pipeline v1.0'
           Description: 'SageMaker project to transform and ingest features into a feature group'
           Info:
-            LoadTemplateFromURL: 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET_PATH >/project-s3-fs-load.yaml'
+            LoadTemplateFromURL: 'https://s3.amazonaws.com/< S3_CFN_STAGING_BUCKET_PATH >/project-s3-fs-ingestion.yaml'
       Tags:
         - Key: 'sagemaker:studio-visibility'
           Value: 'true'
 
-  SCPortfolioProductDataLoadFeatureStoreAssociation:
+  SCPortfolioFeatureStoreDataIngestionProductAssociation:
     Type: 'AWS::ServiceCatalog::PortfolioProductAssociation'
     Properties:
       PortfolioId: !Ref DataScienceAutomationPortfolio
@@ -76,7 +76,7 @@ Resources:
       PrincipalARN: !Ref SCPortfolioPrincipalRoleArn
       PrincipalType: IAM
 
-  SCProductDataLoadFeatureStoreLaunchRoleConstraint:
+  SCFeatureStoreDataIngestionProductLaunchRoleConstraint:
     Type: 'AWS::ServiceCatalog::LaunchRoleConstraint'
     DependsOn: 
       - SCPortfolioPrincipleAssociation

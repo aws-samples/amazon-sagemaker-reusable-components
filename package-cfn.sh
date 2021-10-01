@@ -23,12 +23,12 @@ set -e
 # PLEASE NOTE this script will store all resources to an Amazon S3 bucket s3://${CFN_BUCKET_NAME}/${PROJECT_NAME}
 CFN_BUCKET_NAME=$1
 DEPLOYMENT_REGION=$2
-PROJECT_NAME="amazon-sagemaker-demo"
+PROJECT_NAME="amazon-sagemaker-reusable-components"
 CFN_TEMPLATE_DIR="cfn-templates"
 SEED_CODE_DIR="project-seed-code"
 CFN_OUTPUT_DIR="build/${DEPLOYMENT_REGION}"
 SEED_CODE_OUTPUT_DIR="build/${DEPLOYMENT_REGION}/seed-code"
-SOURCE_CODE_ZIP_NAME="amazon-sagemaker-demo.zip"
+SOURCE_CODE_ZIP_NAME="amazon-sagemaker-reusable-components.zip"
 
 # files that need to be scrubbed with sed to replace < S3 BUCKET LOCATION > with an actual S3 bucket name
 SELF_PACKAGE_LIST="sm-project-sc-portfolio.yaml"
@@ -37,7 +37,7 @@ SELF_PACKAGE_LIST="sm-project-sc-portfolio.yaml"
 AWS_PACKAGE_LIST="sm-project-sc-portfolio.yaml"
 
 # files that wont be uploaded by `aws cloudformation package`
-UPLOAD_LIST="sm-project-sc-portfolio.yaml project-s3-fs-load.yaml" 
+UPLOAD_LIST="sm-project-sc-portfolio.yaml project-s3-fs-ingestion.yaml" 
 
 # Check that S3 bucket exists, if not create a new one
 if aws s3 ls s3://${CFN_BUCKET_NAME} 2>&1 | grep NoSuchBucket

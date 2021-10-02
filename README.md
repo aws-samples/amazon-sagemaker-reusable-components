@@ -1,12 +1,12 @@
 # Amazon SageMaker reusable components
-This solution shows how to deliver reusable and managed components to [Amazon SageMaker](https://aws.amazon.com/pm/sagemaker) environment using [AWS Service Catalog](https://aws.amazon.com/servicecatalog/), [SageMaker Projects](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-projects-whatis.html) and [SageMaker Pipelines](https://aws.amazon.com/sagemaker/pipelines/).
+This solution shows how to deliver reusable and self-contained custom components to [Amazon SageMaker](https://aws.amazon.com/pm/sagemaker) environment using [AWS Service Catalog](https://aws.amazon.com/servicecatalog/), [SageMaker Projects](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-projects-whatis.html) and [SageMaker Pipelines](https://aws.amazon.com/sagemaker/pipelines/).
 
 ## Introduction
 Amazon SageMaker helps data scientists and developers to prepare, build, train, and deploy high-quality machine learning models quickly by bringing together a broad set of capabilities purpose-built for machine learning.
 
 [Amazon SageMaker Studio](https://aws.amazon.com/sagemaker/studio/) is a web-based, integrated development environment (IDE) for machine learning (ML) that lets you build, train, debug, deploy, and monitor your ML models.
 
-To implement reusable, reproducible, and governed custom components in your SageMaker environment, you can use a SageMaker Project. A SageMaker project is a self-sufficient end-to-end ML component, which can be instantiated and used by the entitled users of SageMaker Studio. A project is delivered and provisioned via AWS Service Catalog and contains all resources, artifacts, source code, and permissions, which are needed to perform a designated task or a whole workflow in your SageMaker environment.
+To implement reusable, reproducible, and governed custom components in your SageMaker environment, you can use a SageMaker project. A SageMaker project is a self-sufficient end-to-end ML component, which can be instantiated and used by the entitled users of SageMaker Studio. A project is delivered and provisioned via AWS Service Catalog and contains all resources, artifacts, source code, and permissions, which are needed to perform a designated task or a whole workflow in your SageMaker environment.
 
 You can provision a SageMaker project directly in Studio IDE or via [SageMaker API](https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateProject.html). The provisioning happens under a designated IAM role, which assumed by AWS Service Catalog and contains permission specifically needed to perform project template deployment. The Service Catalog-based approach allows you and your ML team to provision any custom ML components and workflows centrally without requiring each ML user to have high-profile permission policies or going via a manual and non-reproducible individual deployment process.
 
@@ -15,7 +15,7 @@ By implementing custom reusable components in with SageMaker projects, you can s
 This solution shows step-by-step how to author and employ such a reusable component on example of a specific ML use case.
 
 ## Use case
-As an example of an ML workflow, delivered as a [custom SageMaker Project](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-projects-templates-custom.html), we take a use case of an automated pipeline for data transformation and ingestion into [SageMaker Feature Store](https://aws.amazon.com/sagemaker/feature-store/). This workflow combines various AWS services and SageMaker components, such as [AWS Lambda](https://aws.amazon.com/lambda/), [SageMaker Pipelines](https://aws.amazon.com/sagemaker/pipelines/), [AWS CodePipeline](https://aws.amazon.com/codepipeline/), and [AWS CodeBuild](https://aws.amazon.com/codebuild/) to create a self-contained ML component, which you can directly use in your own solution or architecture.
+As an example of an ML workflow, delivered as a [custom SageMaker project](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-projects-templates-custom.html), we take a use case of an automated pipeline for data transformation and ingestion into [SageMaker Feature Store](https://aws.amazon.com/sagemaker/feature-store/). This workflow combines various AWS services and SageMaker components, such as [AWS Lambda](https://aws.amazon.com/lambda/), [SageMaker Pipelines](https://aws.amazon.com/sagemaker/pipelines/), [AWS CodePipeline](https://aws.amazon.com/codepipeline/), and [AWS CodeBuild](https://aws.amazon.com/codebuild/) to create a self-contained ML component, which you can directly use in your own solution or architecture.
 
 The following diagram shows the functional view of the workflow.
 
@@ -23,22 +23,80 @@ The following diagram shows the functional view of the workflow.
 
 On a high level, the workflow comprises the following steps:
 1. Data file or files uploaded to an Amazon S3 bucket
-1. Data processing and transformation is launched 
-1. Extracted, processed, and transformed features are ingested into a designated feature group in Feature Store
+2. Data processing and transformation is launched 
+3. Extracted, processed, and transformed features are ingested into a designated [feature group](https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store-getting-started.html) in Feature Store
+
+
 
 ## Solution architecture
+The detailed component architecture of the solution is presented in the following diagram.
 
 ![](design/feature-store-ingestion-pipeline.drawio.svg)
 
+The _Automated FS data ingestion component_ **(1)** is delivered as part of a broader product portfolio **(2)**, which can contain multiple products. In this solution we have only one product in the portfolio. Both the product (1) and the product portfolio (2) are defined by [AWS CloudFormation](https://aws.amazon.com/cloudformation/) templates. A CloudFormation template **(3)** with the product contains all resources, artifacts, and permissions, which are needed to provision the product in your SageMaker environment.
+
+By the deployment of the product via AWS CloudFormation service, a new SageMaker project **(4)** is created in SageMaker environment. You can see all project artifacts and resources in Studio IDE in **Projects** widget.
+
+The SageMaker project implements the feature ingestion pipeline **(5)**. The pipeline contains a Lambda function, which is launched by [Amazon EventBridge](https://aws.amazon.com/eventbridge/) rule each time a new object is uploaded into a monitored Amazon S3 bucket. The Lambda function starts a SageMaker Pipeline **(6)** which is defined and provisioned as a part of the SageMaker project. The pipeline contains one step with Data Wrangler processor for data transformation and ingestion into a feature group in SageMaker Feature Store. The pipeline source code is also delivered as a part of the project in an [AWS CodeCommit](https://aws.amazon.com/codecommit/) repository **(7)**.
+
+The following section provides implementation details for each part of the SageMaker project. You can use these instructions and code to develop your own ML component.
+
 ## Authoring of SageMaker project template
+To get started with a SageMaker project, you need the following resources, artifacts, IAM roles and permissions:
+- A CloudFormation template which defines a Service Catalog [portfolio](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/what-is_concepts.html)
+- A CloudFormation template which defines a SageMaker project
+- IAM roles and permissions needed to run your project components and perform project's tasks and workflows
+- If your project contains any source code delivered as a part of the project, this code must be also delivered and referred as "seed code"
+
+Each of the following sections describes each part of the project and gives examples of source code.
 
 ### Service Catalog portfolio
+An AWS Service Catalog portfolio is delivered as a CloudFormation template, which defines the following resources:
+- Portfolio definition
+- Product or products definition
+- Product to portfolio association for each product
+- Portfolio to IAM principle association. This defines which IAM principle or principles can deploy products in the portfolio.
+- Product launch role constraint. This defines which IAM role the CloudFormation service assumes when user provisions the template
+
+To make your project template available in your **Organization templates** list in Studio, add the following tag to the product:
+
+```yaml
+    Tags:
+    - Key: 'sagemaker:studio-visibility'
+        Value: 'true'
+```
+
+Refer to [Amazon SageMaker documentation](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-projects-templates-custom.html) for more details.
+
+This solution contains a [working example](cfn-templates/sm-project-sc-portfolio.yaml) of a Service Catalog portfolio containing one product.
 
 ### Project CloudFormation template
+A product is a CloudFormation template. Product's template contains all resources, permissions, and artifacts, which are needed to deliver the product's functionality.
+
+For the product to work with SageMaker projects, you must add the following parameters to your product template:
+
+```yaml
+  SageMakerProjectName:
+    Type: String
+    Description: Name of the project
+    MinLength: 1
+    MaxLength: 32
+    AllowedPattern: ^[a-zA-Z](-*[a-zA-Z0-9])*
+
+  SageMakerProjectId:
+    Type: String
+    Description: Service generated Id of the project.
+```
+
+This solution contains [a product template](cfn-templates/project-s3-fs-ingestion.yaml) which creates the following resources:
+- 
+
+
+### IAM roles and permissions
 
 ### Project seed code
 
-### IAM roles and permissions
+
 
 ### Project live cycle
 
@@ -74,7 +132,7 @@ You must follow the following deployment steps to provision all necessary artifa
     a. Get the SageMaker DomainId:
     ```sh
     export SM_DOMAIN_ID=$(aws sagemaker list-domains \
-        --output text --query 'Domains[].DomainId')
+        --output text --query 'Domains[0].DomainId')
     ```
     b. Get the SageMaker execution role ARN:
     ```sh
@@ -102,7 +160,7 @@ Wait until CloudFormation stack successfully deployed into your account and proc
 AWS Service Catalog uses a default [`AmazonSageMakerServiceCatalogProductsLaunchRole` IAM role](https://docs.aws.amazon.com/sagemaker/latest/dg/security-iam-awsmanpol-sc.html) to launch CloudFormation templates with SageMaker projects. This role is automatically created during provisioning of SageMaker Studio.
 
 To deploy our Feature Store ingestion product as a SageMaker project, this role needs additional permissions. The all needed permissions are defined in a [managed policy](cfn-templates/sm-sc-policies.yaml), which we must attach to 
- `AmazonSageMakerServiceCatalogProductsLaunchRole` role before we can start SageMaker project deployment.
+ `AmazonSageMakerServiceCatalogProductsLaunchRole` role before we can start SageMaker project deployment.  
 First, deploy the managed policy via the provided CloudFormation template:
 ```sh
 aws cloudformation deploy \

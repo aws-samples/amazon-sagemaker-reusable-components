@@ -31,6 +31,10 @@ Metadata:
         default: Permissions
       Parameters:
         - LambdaExecutionRole
+    - Label:
+        default: Seed code S3 bucket
+      Parameters:
+        - SeedCodeS3BucketName
 
     ParameterLabels:
       PipelineNamePrefix:
@@ -47,6 +51,8 @@ Metadata:
         default: Feature Group Name to ingest data
       LambdaExecutionRole:
         default: Execution role for the Lambda function
+      SeedCodeS3BucketName:
+        default: S3 bucket name with project seed code .zip file
 
 Parameters:
   SageMakerProjectName:
@@ -96,38 +102,21 @@ Parameters:
     Default: 'Auto'
     Description: Execution role for the lambda function. If Auto, a new IAM role will be created
   
+  SeedCodeS3BucketName:
+    Type: String
+    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
+    Description: The name of an S3 bucket with a zip file with the project seed code
+
 Conditions:
-  CodePipelineArtifactBucketCondition: !Equals [ 'true', 'true' ]
   CreateLambdaExecutionRoleCondition: !Equals [ !Ref LambdaExecutionRole, 'Auto' ]
 
 Resources:
-  # Retrieve the environment variables
-  GetEnvironmentConfiguration:
-    Type: Custom::GetEnvironmentConfiguration
-    Properties:
-      ServiceToken: !ImportValue 'ds-get-environment-configuration-lambda-arn'
-      SageMakerProjectName: !Ref SageMakerProjectName
-      SSMParams:
-        - 
-          VariableName: 'DataBucketName'
-          ParameterName: 'data-bucket-name'
-        - 
-          VariableName: 'S3VPCEId'
-          ParameterName: 's3-vpce-id'
-        - 
-          VariableName: 'S3KmsKeyId'
-          ParameterName: 'kms-s3-key-arn'
-        - 
-          VariableName: 'SeedCodeS3BucketName'
-          ParameterName: 'seed-code-s3bucket-name'
-
   CodePipelineArtifactsBucket:
     Type: AWS::S3::Bucket
-    Condition: CodePipelineArtifactBucketCondition
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
-      BucketName: !Sub sm-mlops-cp-${SageMakerProjectName}-${SageMakerProjectId} # 12+32+15=59 chars max/ 63 allowed
+      BucketName: !Sub sagemaker-cp-${SageMakerProjectName}-${SageMakerProjectId} # 12+32+15=59 chars max/ 63 allowed
       AccessControl: Private
       PublicAccessBlockConfiguration:
         BlockPublicAcls: TRUE
@@ -137,20 +126,14 @@ Resources:
       BucketEncryption:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
-              SSEAlgorithm: 'aws:kms'
-              KMSMasterKeyID: !GetAtt GetEnvironmentConfiguration.S3KmsKeyId
-      Tags:
-        - Key: EnvironmentName
-          Value: !GetAtt GetEnvironmentConfiguration.EnvironmentName
-        - Key: EnvironmentType
-          Value: !GetAtt GetEnvironmentConfiguration.EnvironmentType
+              SSEAlgorithm: 'AES256'
 
   DataLoadPipelineCodeCommitEventRule:
     Type: AWS::Events::Rule
     Properties:
       # Max length allowed: 64
       Name: !Sub sagemaker-${SageMakerProjectName}-${SageMakerProjectId}-build # max: 10+33+15+5=63 chars
-      Description: "Rule to start a pipeline upsert when data load pipeline CodeCommit repository is updated"
+      Description: "Rule to start a pipeline upsert when data pipeline CodeCommit repository is updated"
       EventPattern:
         source:
           - "aws.codecommit"
@@ -177,17 +160,12 @@ Resources:
     Properties:
       # Max allowed length: 100 chars
       RepositoryName: !Sub sagemaker-${SageMakerProjectName}-${SageMakerProjectId}-data-pipeline # max: 10+33+15+14=72
-      RepositoryDescription: !Sub SageMaker data load pipeline building infrastructure as code for the project ${SageMakerProjectName}
+      RepositoryDescription: !Sub SageMaker data transformation and ingestion pipeline building infrastructure as code for the project ${SageMakerProjectName}
       Code:
         S3:
-          Bucket: !GetAtt GetEnvironmentConfiguration.SeedCodeS3BucketName 
-          Key: amazon-sagemaker-demo/seed-code/s3-fs-load-v1.0.zip
+          Bucket: !Ref SeedCodeS3BucketName 
+          Key: amazon-sagemaker-reusable-components/seed-code/s3-fs-ingestion-v1.0.zip
         BranchName: main
-      Tags:
-        - Key: EnvironmentName
-          Value: !GetAtt GetEnvironmentConfiguration.EnvironmentName
-        - Key: EnvironmentType
-          Value: !GetAtt GetEnvironmentConfiguration.EnvironmentType
 
   DataLoadPipelineBuildProject:
     Type: AWS::CodeBuild::Project
@@ -225,15 +203,6 @@ Resources:
         Type: CODEPIPELINE
         BuildSpec: buildspec.yml
       TimeoutInMinutes: 480
-      VpcConfig:
-        SecurityGroupIds: !GetAtt GetEnvironmentConfiguration.SecurityGroups
-        Subnets: !GetAtt GetEnvironmentConfiguration.SubnetIds
-        VpcId: !GetAtt GetEnvironmentConfiguration.VpcId
-      Tags:
-        - Key: EnvironmentName
-          Value: !GetAtt GetEnvironmentConfiguration.EnvironmentName
-        - Key: EnvironmentType
-          Value: !GetAtt GetEnvironmentConfiguration.EnvironmentType
 
   DataLoadPipelineBuildPipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -243,16 +212,7 @@ Resources:
       RoleArn: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/service-role/AmazonSageMakerServiceCatalogProductsUseRole'
       ArtifactStore:
         Type: S3
-        Location: !If 
-          - CodePipelineArtifactBucketCondition
-          - !Ref CodePipelineArtifactsBucket
-          - !GetAtt GetEnvironmentConfiguration.DataBucketName
-
-      Tags:
-        - Key: EnvironmentName
-          Value: !GetAtt GetEnvironmentConfiguration.EnvironmentName
-        - Key: EnvironmentType
-          Value: !GetAtt GetEnvironmentConfiguration.EnvironmentType
+        Location: !Ref CodePipelineArtifactsBucket
 
       Stages:
         - Name: Source
@@ -374,11 +334,6 @@ Resources:
         - !Ref LambdaExecutionRole
       Runtime: python3.8
       Timeout: 60
-      Tags:
-        - Key: EnvironmentName
-          Value: !GetAtt GetEnvironmentConfiguration.EnvironmentName
-        - Key: EnvironmentType
-          Value: !GetAtt GetEnvironmentConfiguration.EnvironmentType
 
   CloudTrailBucket:
     # Bucket for CloudTrail logs
@@ -402,11 +357,6 @@ Resources:
       OwnershipControls: 
         Rules: 
           - ObjectOwnership: BucketOwnerPreferred
-      Tags:
-        - Key: EnvironmentName
-          Value: !GetAtt GetEnvironmentConfiguration.EnvironmentName
-        - Key: EnvironmentType
-          Value: !GetAtt GetEnvironmentConfiguration.EnvironmentType
 
   # Bucket policy enables CloudTrail to write to the CloudTrailBucket
   CloudTrailBucketPolicy: 
@@ -450,11 +400,6 @@ Resources:
             Values: 
               - !Sub arn:aws:s3:::${S3DataPrefix}
       IncludeGlobalServiceEvents: false
-      Tags:
-        - Key: EnvironmentName
-          Value: !GetAtt GetEnvironmentConfiguration.EnvironmentName
-        - Key: EnvironmentType
-          Value: !GetAtt GetEnvironmentConfiguration.EnvironmentType
 
   # Lambda resource permission for EventBridge to invoke the Lambda function
   CloudTrailLambdaInvokePermission:

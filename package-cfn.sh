@@ -62,7 +62,7 @@ zip -r ${SOURCE_CODE_ZIP_NAME} . -i "*.yaml" "*.yml" "*.sh"
 
 ## Zip the MLOps project seed code for
 echo "Zipping MLOps project seed code"
-(cd ${SEED_CODE_DIR}/s3-fs-load/ && zip -r ../../${SEED_CODE_OUTPUT_DIR}/s3-fs-load-v1.0.zip .)
+(cd ${SEED_CODE_DIR}/s3-fs-ingestion/ && zip -r ../../${SEED_CODE_OUTPUT_DIR}/s3-fs-ingestion-v1.0.zip .)
 
 ## publish files to target AWS regions
 echo "Publishing CloudFormation to ${DEPLOYMENT_REGION}"

@@ -136,7 +136,7 @@ If your custom SageMaker project implements CI/CD workflow automation or contain
 
 This solution delivers the seed code which contains a SageMaker pipeline definition. A CI/CD workflow as a CodePipeline pipeline is also created as a part of the project. This CodePipeline pipeline is started each time there is a commit to the source code repository.
 
-### Project live cycle
+### Project life cycle
 A project goes via distinct life cycle stages: you create a project, you use it and its resources, and you optionally delete the project when you don't need it anymore.
 
 #### Create project
@@ -357,7 +357,7 @@ Please use the provided [setup](notebooks/00-setup.ipynb) and [feature-store-ing
 The delivered notebooks take you through the following implementation:
 - [Setup](notebooks/00-setup.ipynb)
     - set up the working environment, create an S3 bucket for data upload, explore the test dataset
-    - create a Data Wrangler flow for data transformation and feature ingestion
+    - optional - create a Data Wrangler flow for data transformation and feature ingestion
     - create a feature group in Feature Store where features are stored
 - [Feature Store ingest pipeline](notebooks/01-feature-store-ingest-pipeline.ipynb)
     - provision a SageMaker project with a data pipeline
@@ -365,6 +365,7 @@ The delivered notebooks take you through the following implementation:
     - test the data pipeline by uploading new data into the monitored S3 bucket
 - [Clean up](noteboks/99-clean-up.ipynb)
     - delete the project and project's resources
+    - delete the feature group
 
 # Dataset
 We use a well-known [Abalone dataset](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/regression.html#abalone) in this solution. The dataset contains 4177 rows of data, and 8 features.
@@ -385,3 +386,4 @@ The copy of the dataset is also available in the project folder [`dataset`](data
 - [Create Amazon SageMaker projects using third-party source control and Jenkins
 ](https://aws.amazon.com/blogs/machine-learning/create-amazon-sagemaker-projects-using-third-party-source-control-and-jenkins/)
 - [GitHub public repository for Feature Store workshop](https://github.com/aws-samples/amazon-sagemaker-feature-store-end-to-end-workshop)
+- [GitHub public repository for Amazon SageMaker Drift Detection](https://github.com/aws-samples/amazon-sagemaker-drift-detection)

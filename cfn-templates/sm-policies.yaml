@@ -11,6 +11,18 @@ Outputs:
 
 Resources:
 
+  AmazonSageMakerExecutionRolePolicy:
+    Type: 'AWS::IAM::ManagedPolicy'
+    Properties:
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Sid: CloudFormationPermission
+            Effect: Allow
+            Action:
+              - cloudformation:DescribeStacks
+            Resource: !Sub 'arn:aws:cloudformation:us-east-1${AWS::Region}:${AWS::AccountId}:stack/sm-*'
+            
   AmazonSageMakerServiceCatalogFSIngestionProductPolicy:
       Type: 'AWS::IAM::ManagedPolicy'
       Properties:

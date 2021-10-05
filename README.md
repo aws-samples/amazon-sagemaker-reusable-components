@@ -52,7 +52,7 @@ The structure of the code repository is as follows:
 - `cfn-templates` folder:
     - [`project-s3-fs-ingestion.yaml`](cfn-templates/project-s3-fs-ingestion.yaml): a CloudFormation template with the SageMaker project
     - [`sm-project-sc-portfolio.yaml`](cfn-templates/sm-project-sc-portfolio.yaml): a CloudFormation template with product portfolio
-    - [`sm-sc-policies.yaml`](cfn-templates/sm-sc-policies.yaml): a managed permission policy with permissions needed to deploy the SageMaker project
+    - [`sm-policies.yaml`](cfn-templates/sm-policies.yaml): a managed permission policy with permissions needed to deploy the SageMaker project
 - `project-seed-code/s3-fs-ingestion` folder: contains the project seed code including the SageMaker pipeline definition code, build scripts for CodeBuild project, and source code for the Lambda function
 - `notebooks` folder: contains SageMaker notebooks to experiment with the project
 
@@ -119,7 +119,7 @@ When you enable SageMaker Projects for Studio users, two default IAM roles are c
 
 Refer to the [AWS Managed Policies for SageMaker projects](https://docs.aws.amazon.com/sagemaker/latest/dg/security-iam-awsmanpol-sc.html) documentation for more details on the default roles.
 
-If you create and assign new IAM roles to resources created by the project provisioning via AWS Service Catalog and CloudFormation, the `AmazonSageMakerServiceCatalogProductsLaunchRole` must have `iam:PassRole` permission for the roles you created. For example, this solution creates an IAM execution role for the Lambda function. [The managed policy](cfn-templates/sm-sc-policies.yaml) for `AmazonSageMakerServiceCatalogProductsLaunchRole` contains the corresponding permission statement:
+If you create and assign new IAM roles to resources created by the project provisioning via AWS Service Catalog and CloudFormation, the `AmazonSageMakerServiceCatalogProductsLaunchRole` must have `iam:PassRole` permission for the roles you created. For example, this solution creates an IAM execution role for the Lambda function. [The managed policy](cfn-templates/sm-policies.yaml) for `AmazonSageMakerServiceCatalogProductsLaunchRole` contains the corresponding permission statement:
 ```yaml
 - Sid: FSIngestionPermissionPassRole
     Effect: Allow
@@ -273,12 +273,12 @@ Wait until CloudFormation stack is successfully deployed into your account and p
 ### Add permissions to Service Catalog launch IAM role
 AWS Service Catalog uses a default [`AmazonSageMakerServiceCatalogProductsLaunchRole` IAM role](https://docs.aws.amazon.com/sagemaker/latest/dg/security-iam-awsmanpol-sc.html) to launch CloudFormation templates with SageMaker projects. This role is automatically created during provisioning of SageMaker Studio if you enable SageMaker Projects for Studio users.
 
-To deploy our Feature Store ingestion product as a SageMaker project, this role needs additional permissions. All needed permissions are defined in a [managed policy](cfn-templates/sm-sc-policies.yaml), which we must attach to 
+To deploy our Feature Store ingestion product as a SageMaker project, this role needs additional permissions. All needed permissions are defined in a [managed policy](cfn-templates/sm-policies.yaml), which we must attach to 
  `AmazonSageMakerServiceCatalogProductsLaunchRole` role before we can start SageMaker project deployment.  
 First, deploy the managed policy via the provided CloudFormation template:
 ```sh
 aws cloudformation deploy \
-    --template-file cfn-templates/sm-sc-policies.yaml \
+    --template-file cfn-templates/sm-policies.yaml \
     --stack-name sagemaker-sc-policies \
     --capabilities CAPABILITY_NAMED_IAM
 ```

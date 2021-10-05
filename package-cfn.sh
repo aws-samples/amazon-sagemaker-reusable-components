@@ -31,7 +31,7 @@ SEED_CODE_OUTPUT_DIR="build/${DEPLOYMENT_REGION}/seed-code"
 SOURCE_CODE_ZIP_NAME="amazon-sagemaker-reusable-components.zip"
 
 # files that need to be scrubbed with sed to replace < S3 BUCKET LOCATION > with an actual S3 bucket name
-SELF_PACKAGE_LIST="sm-project-sc-portfolio.yaml"
+SELF_PACKAGE_LIST="sm-project-sc-portfolio.yaml project-s3-fs-ingestion.yaml"
 
 # files to be packaged using `aws cloudformation package`
 AWS_PACKAGE_LIST="sm-project-sc-portfolio.yaml"

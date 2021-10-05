@@ -31,28 +31,22 @@ Metadata:
         default: Permissions
       Parameters:
         - LambdaExecutionRole
-    - Label:
-        default: Seed code S3 bucket
-      Parameters:
-        - SeedCodeS3BucketName
 
     ParameterLabels:
       PipelineNamePrefix:
-        default: Pipeline Name Prefix
+        default: Pipeline name prefix
       PipelineDescription:
-        default: Pipeline Description - optional
+        default: Pipeline description - optional
       S3DataPrefix:
-        default: S3 Data Prefix to monitor for new data
+        default: S3 Data prefix to monitor for new data
       DataWranglerFlowUrl:
-        default: Data Wrangler Flow URL
+        default: Data Wrangler flow URL
       DataWranglerOutputName:
         default: Data Wrangler output name (node_id.default)
       FeatureGroupName:
-        default: Feature Group Name to ingest data
+        default: Feature group name to ingest data
       LambdaExecutionRole:
         default: Execution role for the Lambda function
-      SeedCodeS3BucketName:
-        default: S3 bucket name with project seed code .zip file
 
 Parameters:
   SageMakerProjectName:
@@ -101,11 +95,6 @@ Parameters:
     Type: String
     Default: 'Auto'
     Description: Execution role for the lambda function. If Auto, a new IAM role will be created
-  
-  SeedCodeS3BucketName:
-    Type: String
-    AllowedPattern: "^[0-9a-zA-Z]+([0-9a-zA-Z-]*[0-9a-zA-Z])*$"
-    Description: The name of an S3 bucket with a zip file with the project seed code
 
 Conditions:
   CreateLambdaExecutionRoleCondition: !Equals [ !Ref LambdaExecutionRole, 'Auto' ]
@@ -163,7 +152,7 @@ Resources:
       RepositoryDescription: !Sub SageMaker data transformation and ingestion pipeline building infrastructure as code for the project ${SageMakerProjectName}
       Code:
         S3:
-          Bucket: !Ref SeedCodeS3BucketName 
+          Bucket: < S3_CFN_STAGING_BUCKET > 
           Key: amazon-sagemaker-reusable-components/seed-code/s3-fs-ingestion-v1.0.zip
         BranchName: main
 

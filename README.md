@@ -51,8 +51,7 @@ This solution contains all source code needed to create your own custom SageMake
 The structure of the code repository is as follows:
 - `cfn-templates` folder:
     - [`project-s3-fs-ingestion.yaml`](cfn-templates/project-s3-fs-ingestion.yaml): a CloudFormation template with the SageMaker project
-    - [`sm-project-sc-portfolio.yaml`](cfn-templates/sm-project-sc-portfolio.yaml): a CloudFormation template with product portfolio
-    - [`sm-policies.yaml`](cfn-templates/sm-policies.yaml): a managed permission policy with permissions needed to deploy the SageMaker project
+    - [`sm-project-sc-portfolio.yaml`](cfn-templates/sm-project-sc-portfolio.yaml): a CloudFormation template with product portfolio and managed policies with permissions needed to deploy SageMaker projects
 - `project-seed-code/s3-fs-ingestion` folder: contains the project seed code including the SageMaker pipeline definition code, build scripts for CodeBuild project, and source code for the Lambda function
 - `notebooks` folder: contains SageMaker notebooks to experiment with the project
 
@@ -119,7 +118,7 @@ When you enable SageMaker Projects for Studio users, two default IAM roles are c
 
 Refer to the [AWS Managed Policies for SageMaker projects](https://docs.aws.amazon.com/sagemaker/latest/dg/security-iam-awsmanpol-sc.html) documentation for more details on the default roles.
 
-If you create and assign new IAM roles to resources created by the project provisioning via AWS Service Catalog and CloudFormation, the `AmazonSageMakerServiceCatalogProductsLaunchRole` must have `iam:PassRole` permission for the roles you created. For example, this solution creates an IAM execution role for the Lambda function. [The managed policy](cfn-templates/sm-policies.yaml) for `AmazonSageMakerServiceCatalogProductsLaunchRole` contains the corresponding permission statement:
+If you create and assign new IAM roles to resources created by the project provisioning via AWS Service Catalog and CloudFormation, the `AmazonSageMakerServiceCatalogProductsLaunchRole` must have `iam:PassRole` permission for the roles you created. For example, this solution creates an IAM execution role for the Lambda function. [The managed policy](cfn-templates/sm-project-sc-portfolio.yaml) for `AmazonSageMakerServiceCatalogProductsLaunchRole` contains the corresponding permission statement:
 ```yaml
 - Sid: FSIngestionPermissionPassRole
     Effect: Allow
@@ -257,46 +256,56 @@ You must follow the following deployment steps to provision all necessary artifa
 1. Deploy AWS Service Catalog product portfolio:
 ```sh
 S3_BUCKET_NAME=<S3 bucket name you used to package CloudFormation templates in step 1>
-STACK_NAME=sm-project-sc-portfolio
+SC_PORTFOLIO_STACK_NAME=sm-project-sc-portfolio
 
 aws cloudformation create-stack \
     --template-url https://s3.$AWS_DEFAULT_REGION.amazonaws.com/$S3_BUCKET_NAME/amazon-sagemaker-reusable-components/sm-project-sc-portfolio.yaml \
     --region $AWS_DEFAULT_REGION \
-    --stack-name $STACK_NAME  \
+    --stack-name $SC_PORTFOLIO_STACK_NAME  \
     --disable-rollback \
+    --capabilities CAPABILITY_NAMED_IAM \
     --parameters \
         ParameterKey=SCPortfolioPrincipalRoleArn,ParameterValue=$SM_EXECUTION_ROLE
 ```
 
 Wait until CloudFormation stack is successfully deployed into your account and proceed with the next step.
 
-### Add permissions to Service Catalog launch IAM role
+### Add permissions to Service Catalog launch and SageMaker execution IAM roles
 AWS Service Catalog uses a default [`AmazonSageMakerServiceCatalogProductsLaunchRole` IAM role](https://docs.aws.amazon.com/sagemaker/latest/dg/security-iam-awsmanpol-sc.html) to launch CloudFormation templates with SageMaker projects. This role is automatically created during provisioning of SageMaker Studio if you enable SageMaker Projects for Studio users.
 
-To deploy our Feature Store ingestion product as a SageMaker project, this role needs additional permissions. All needed permissions are defined in a [managed policy](cfn-templates/sm-policies.yaml), which we must attach to 
+To deploy our Feature Store ingestion product as a SageMaker project, this role needs additional permissions. All needed permissions are defined in a [managed policy resource `AmazonSageMakerServiceCatalogFSIngestionProductPolicy`](cfn-templates/sm-project-sc-portfolio.yaml), which we must attach to 
  `AmazonSageMakerServiceCatalogProductsLaunchRole` role before we can start SageMaker project deployment.  
-First, deploy the managed policy via the provided CloudFormation template:
-```sh
-aws cloudformation deploy \
-    --template-file cfn-templates/sm-policies.yaml \
-    --stack-name sagemaker-sc-policies \
-    --capabilities CAPABILITY_NAMED_IAM
-```
 
-Secondly, attach the created managed policy to the `AmazonSageMakerServiceCatalogProductsLaunchRole` role.  
-Retrieve the managed policy ARN:
+To run some code cells in the provided notebooks, for example with calls to [CloudFormation API](https://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_Operations.html), the SageMaker execution role needs additional permissions. These permissions are defined in [managed policy resource `AmazonSageMakerExecutionRolePolicy`](cfn-templates/sm-project-sc-portfolio.yaml) and must be attached to the SageMaker execution role.
+
+Run the following CLI commands to attach the created managed policies to the `AmazonSageMakerServiceCatalogProductsLaunchRole` and SageMaker execution IAM roles:  
+Retrieve the managed policy ARNs and SageMaker execution role name:
 ```sh
 export SM_SC_FS_INGESTION_POLICY_ARN=$(aws cloudformation describe-stacks \
-    --stack-name "sagemaker-sc-policies" \
+    --stack-name $SC_PORTFOLIO_STACK_NAME \
     --output text \
     --query 'Stacks[0].Outputs[?OutputKey==`FSIngestionProductPolicyArn`].OutputValue')
+
+export SM_EXECUTION_ROLE_POLICY_ARN=$(aws cloudformation describe-stacks \
+    --stack-name $SC_PORTFOLIO_STACK_NAME \
+    --output text \
+    --query 'Stacks[0].Outputs[?OutputKey==`AmazonSageMakerExecutionRolePolicyArn`].OutputValue')
+
+export SM_EXECUTION_ROLE_NAME=$(aws cloudformation describe-stacks \
+    --stack-name $SC_PORTFOLIO_STACK_NAME \
+    --output text \
+    --query 'Stacks[0].Outputs[?OutputKey==`AmazonSageMakerExecutionRoleName`].OutputValue')
 ```
 
-Attach the policy to the role:
+Attach the policies to the roles:
 ```sh
 aws iam attach-role-policy \
     --role-name AmazonSageMakerServiceCatalogProductsLaunchRole \
     --policy-arn $SM_SC_FS_INGESTION_POLICY_ARN
+
+aws iam attach-role-policy \
+    --role-name  $SM_EXECUTION_ROLE_NAME \
+    --policy-arn $SM_EXECUTION_ROLE_POLICY_ARN
 ```
 
 ### Start Studio
@@ -367,6 +376,25 @@ The delivered notebooks take you through the following implementation:
     - delete the project and project's resources
     - delete the feature group
 
+# Clean up
+1. Run all steps in the provided [clean-up notebook](notebooks/99-clean-up.ipynb)
+
+2. Detach the managed policies from the roles:
+```sh
+aws iam detach-role-policy \
+    --role-name AmazonSageMakerServiceCatalogProductsLaunchRole \
+    --policy-arn $SM_SC_FS_INGESTION_POLICY_ARN
+
+aws iam detach-role-policy \
+    --role-name  $SM_EXECUTION_ROLE_NAME \
+    --policy-arn $SM_EXECUTION_ROLE_POLICY_ARN
+```
+
+3. Delete the SageMaker product portfolio stack
+```sh
+aws cloudformation delete-stack --stack-name $SC_PORTFOLIO_STACK_NAME
+```
+
 # Dataset
 We use a well-known [Abalone dataset](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/regression.html#abalone) in this solution. The dataset contains 4177 rows of data, and 8 features.
 
@@ -387,3 +415,4 @@ The copy of the dataset is also available in the project folder [`dataset`](data
 ](https://aws.amazon.com/blogs/machine-learning/create-amazon-sagemaker-projects-using-third-party-source-control-and-jenkins/)
 - [GitHub public repository for Feature Store workshop](https://github.com/aws-samples/amazon-sagemaker-feature-store-end-to-end-workshop)
 - [GitHub public repository for Amazon SageMaker Drift Detection](https://github.com/aws-samples/amazon-sagemaker-drift-detection)
+- [Schedule an Amazon SageMaker Data Wrangler flow to process new data periodically using AWS Lambda functions](https://aws.amazon.com/blogs/machine-learning/schedule-an-amazon-sagemaker-data-wrangler-flow-to-process-new-data-periodically-using-aws-lambda-functions/)

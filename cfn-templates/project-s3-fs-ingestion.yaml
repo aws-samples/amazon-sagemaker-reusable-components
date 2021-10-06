@@ -188,6 +188,8 @@ Resources:
             Value: !Ref FeatureGroupName
           - Name: AWS_REGION
             Value: !Ref AWS::Region
+          - Name: EXECUTION_ROLE
+            Value: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/service-role/AmazonSageMakerServiceCatalogProductsUseRole'
       Source:
         Type: CODEPIPELINE
         BuildSpec: buildspec.yml

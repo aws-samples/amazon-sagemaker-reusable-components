@@ -21,6 +21,7 @@ phases:
           --dw-flow-url "$DW_FLOW_URL" \
           --dw-flow-output-name "$DW_FLOW_OUTPUT_NAME" \
           --s3-data-prefix "$S3_DATA_PREFIX" \
-          --feature-group-name "$FEATURE_GROUP_NAME"
+          --feature-group-name "$FEATURE_GROUP_NAME" \
+          --execution-role "$EXECUTION_ROLE"
 
       - echo "Create/update of the SageMaker pipeline ${PIPELINE_NAME_PREFIX}-${SAGEMAKER_PROJECT_ID} completed"

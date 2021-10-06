@@ -21,6 +21,7 @@ if __name__ == "__main__":
     parser.add_argument("--dw-flow-output-name", type=str, required=True)
     parser.add_argument("--s3-data-prefix", type=str, required=True)
     parser.add_argument("--feature-group-name", type=str, required=True)
+    parser.add_argument("--execution-role", type=str, default="")
 
     args, _ = parser.parse_known_args()
 
@@ -37,6 +38,7 @@ if __name__ == "__main__":
             flow_output_name=args.dw_flow_output_name,
             input_data_s3_url=f"s3://{args.s3_data_prefix}",
             feature_group_name=args.feature_group_name,
+            execution_role=args.execution_role,
     )
 
     logger.info(f"pipeline created:")

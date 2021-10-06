@@ -20,9 +20,19 @@ from sagemaker.processing import (
 from sagemaker.network import NetworkConfig
 from sagemaker import image_uris
 
-from utils import get_environment
-
 logger = logging.getLogger(__name__)
+
+def get_execution_role():
+    sm = boto3.client("sagemaker")
+    ssm = boto3.client("ssm")
+
+    r = sm.describe_domain(
+            DomainId=[
+                d["DomainId"] for d in sm.list_domains()["Domains"] if boto3.Session().region_name in d["DomainArn"]
+            ][0]
+        )
+    
+    return r["DefaultUserSettings"]["ExecutionRole"]
 
 def create_pipeline(
     pipeline_name="s3-fs-ingest-pipeline",
@@ -33,21 +43,17 @@ def create_pipeline(
     flow_output_name="",
     input_data_s3_url="",
     feature_group_name="",
+    execution_role=""
 ):
     logger.info(f"Creating sagemaker S3 to feature store load pipeline: {pipeline_name}")
+    logger.info(f"execution role passed: {execution_role}")
 
-    # get environment variables
-    ssm_parameters = [
-        {"VariableName":"PipelineExecutionRole", "ParameterName":"sm-pipeline-execution-role-arn"},
-        {"VariableName":"DataBucketName", "ParameterName":"data-bucket-name"},
-        {"VariableName":"S3KmsKeyId", "ParameterName":"kms-s3-key-arn"},
-        {"VariableName":"EbsKmsKeyArn", "ParameterName":"kms-ebs-key-arn"},
-    ]
+    if execution_role is None or execution_role == "":
+        execution_role = get_execution_role()
+        logger.info(f"execution_role set to {execution_role}")
 
-    env_data = get_environment(ssm_params=ssm_parameters)
-    logger.info(f"Retrieved environment data:\n{json.dumps(env_data, indent=2)}")
-
-    sagemaker_session = sagemaker.Session(default_bucket=env_data["DataBucketName"])
+    output_content_type = "CSV"
+    sagemaker_session = sagemaker.Session()
 
     # setup pipeline parameters
     p_processing_instance_count = ParameterInteger(
@@ -74,6 +80,10 @@ def create_pipeline(
         name="InputDataUrl",
         default_value=input_data_s3_url
     )
+    p_feature_group_name = ParameterString(
+        name="FeatureGroupName",
+        default_value=feature_group_name
+    )
 
     # DW flow processing job inputs and output
     flow_input = ProcessingInput(
@@ -97,8 +107,15 @@ def create_pipeline(
     processing_job_output = ProcessingOutput(
         output_name=p_flow_output_name,
         app_managed=True,
-        feature_store_output=FeatureStoreOutput(feature_group_name=feature_group_name),
+        feature_store_output=FeatureStoreOutput(feature_group_name=p_feature_group_name),
     )
+
+    # Output configuration used as processing job container arguments 
+    output_config = {
+        flow_output_name: {
+            "content_type": output_content_type
+        }
+    }
 
     # get data wrangler container uri
     container_uri = image_uris.retrieve(
@@ -106,33 +123,24 @@ def create_pipeline(
         region=sagemaker_session.boto_region_name
     )
  
-    # set up network configuration
-    network_config = NetworkConfig(
-        enable_network_isolation=False, 
-        security_group_ids=env_data["SecurityGroups"],
-        subnets=env_data["SubnetIds"],
-        encrypt_inter_container_traffic=True)
-
     logger.info(f"creating DW processor with container uri: {container_uri}")    
     
     # create DW processor
     processor = Processor(
-        role=env_data["ExecutionRole"],
+        role=execution_role,
         image_uri=container_uri,
         instance_count=p_processing_instance_count,
         instance_type=p_processing_instance_type,
         volume_size_in_gb=p_processing_volume_size,
         sagemaker_session=sagemaker_session,
-        network_config=network_config,
-        volume_kms_key=env_data["EbsKmsKeyArn"],
-        output_kms_key=env_data["S3KmsKeyId"]
     )
 
     step_process = ProcessingStep(
         name="datawrangler-processing-to-feature-store",
         processor=processor,
         inputs=[flow_input] + [data_input],
-        outputs=[processing_job_output]
+        outputs=[processing_job_output],
+        job_arguments=[f"--output-config '{json.dumps(output_config)}'"],
     )
 
     pipeline = Pipeline(
@@ -144,19 +152,18 @@ def create_pipeline(
             p_flow_output_name,
             p_input_flow,
             p_input_data,
+            p_feature_group_name
         ],
         steps=[step_process],
         sagemaker_session=sagemaker_session
     )
 
     response = pipeline.upsert(
-        role_arn=env_data["PipelineExecutionRole"],
+        role_arn=execution_role,
         description=pipeline_description,
         tags=[
         {'Key': 'sagemaker:project-name', 'Value': project_name },
-        {'Key': 'sagemaker:project-id', 'Value': project_id },
-        {'Key': 'EnvironmentName', 'Value': env_data['EnvironmentName'] },
-        {'Key': 'EnvironmentType', 'Value': env_data['EnvironmentType'] },
+        {'Key': 'sagemaker:project-id', 'Value': project_id }
     ],
     )
 

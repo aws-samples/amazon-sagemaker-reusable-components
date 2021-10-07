@@ -116,6 +116,13 @@ Resources:
             Resource:
               - !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/sm-*'
               - !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/sagemaker-*'
+          - Sid: S3Permission
+            Effect: Allow
+            Action:
+              - s3:DeleteBucket
+            Resource:
+              - 'arn:aws:s3:::sagemaker-cp-*'
+              - 'arn:aws:s3:::sagemaker-ct-*'
             
   AmazonSageMakerServiceCatalogFSIngestionProductPolicy:
       Type: 'AWS::IAM::ManagedPolicy'

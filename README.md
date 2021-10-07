@@ -348,6 +348,14 @@ Open a system terminal in Studio in the **Launcher** window:
 
 ![](img/studio-system-terminal.png)
 
+🚧 TEMPORARY 🚧  
+The code is in Amazon Gitlab. You cannot access the Gitlab repository from SageMaker Studio terminal.
+As a workaround, you must zip the code repository, upload file to Studio and unzip.  
+
+https://gitlab.aws.dev/ilyiny/amazon-sagemaker-reusable-components
+
+🚧 TEMPORARY 🚧
+
 Run the following command in the terminal:
 ```sh
 git clone https://github.com/aws-samples/amazon-sagemaker-reusable-components.git
@@ -368,17 +376,22 @@ The delivered notebooks take you through the following implementation:
     - set up the working environment, create an S3 bucket for data upload, explore the test dataset
     - optional - create a Data Wrangler flow for data transformation and feature ingestion
     - create a feature group in Feature Store where features are stored
+    - query the data from the feature group
 - [Feature Store ingest pipeline](notebooks/01-feature-store-ingest-pipeline.ipynb)
     - provision a SageMaker project with a data pipeline
     - explore the project resources
     - test the data pipeline by uploading new data into the monitored S3 bucket
-- [Clean up](noteboks/99-clean-up.ipynb)
+    - run the data pipeline on demand via Python SDK
+    - query the data from the feature group
+- [Clean up](notebooks/99-clean-up.ipynb)
     - delete the project and project's resources
     - delete the feature group
+    - delete project-provisioned S3 buckets and S3 objects
 
 # Clean up
-1. Run all steps in the provided [clean-up notebook](notebooks/99-clean-up.ipynb)
+To avoid charges, you must remove all project-provisioned and generated resources from your AWS account. 
 
+1. Run all steps in the provided [clean-up notebook](notebooks/99-clean-up.ipynb)
 2. Detach the managed policies from the roles:
 ```sh
 aws iam detach-role-policy \
@@ -389,7 +402,6 @@ aws iam detach-role-policy \
     --role-name  $SM_EXECUTION_ROLE_NAME \
     --policy-arn $SM_EXECUTION_ROLE_POLICY_ARN
 ```
-
 3. Delete the SageMaker product portfolio stack
 ```sh
 aws cloudformation delete-stack --stack-name $SC_PORTFOLIO_STACK_NAME

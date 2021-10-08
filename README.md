@@ -103,7 +103,7 @@ This solution contains a [product template](cfn-templates/project-s3-fs-ingestio
 - A CodePipeline pipeline to orchestrate a build of the SageMaker pipeline
 - A Lambda function to start the SageMaker pipeline whenever a new object is uploaded to the monitored S3 bucket
 - An IAM execution role for the Lambda function
-- An S3 bucket to keep an [AWS CloudTrail](https://aws.amazon.com/cloudtrail/) log. ❗ We need a CloudTrail log to enable EventBridge notification for object put events on the monitored bucket. We use the CloudTrail-based notification instead of S3 notifications because we don't want to overwrite the existing S3 notification on the monitored bucket
+- An S3 bucket to keep an [AWS CloudTrail](https://aws.amazon.com/cloudtrail/) log. ❗ We need a CloudTrail log to enable EventBridge notification for object put events on the monitored bucket. We use the CloudTrail-based notification instead of S3 notifications because we don't want to overwrite an existing S3 notification on the monitored bucket
 - A CloudTrail log configured to capture `WriteOnly` events on S3 objects under a specified S3 prefix
 - An EventBridge rule to launch the Lambda function whenever a new object is uploaded to the monitored S3 bucket. The EventBridge rule pattern monitors the events `PutObject` and `CompleteMultipartUpload`
 
@@ -205,7 +205,7 @@ sm_client.delete_project(ProjectName="MyProject")
 
 The project deletion also initiates the deletion of the CloudFormation stack with the project template.
 
-❗ Please note, a project can create other resources, such as objects in S3 buckets, ML models, feature groups, or CloudFormation stacks. These resources may not be deleted upon project deletion. Refer to a specific project documentation to perform a full clean up.
+❗ Please note, a project can create other resources, such as objects in S3 buckets, ML models, feature groups, inference endpoints, or CloudFormation stacks. These resources may not be removed upon project deletion. Refer to a specific project documentation how to perform a full clean up.
 
 This solution provides a [SageMaker Studio notebook](notebooks/99-clean-up.ipynb) to delete all resources created by the project.
 

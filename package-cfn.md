@@ -68,3 +68,6 @@ Run the `ls` on the S3 bucket to check that all templates are uploaded:
 ```sh
 aws s3 ls s3://${S3_BUCKET_NAME}/amazon-sagemaker-reusable-components/ --recursive
 ```
+
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+SPDX-License-Identifier: MIT-0

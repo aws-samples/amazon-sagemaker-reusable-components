@@ -29,7 +29,7 @@ On a high level, the workflow comprises the following steps:
 ## Solution architecture
 The detailed component architecture of the solution is presented in the following diagram.
 
-![](design/feature-store-ingestion-pipeline.drawio.svg)
+![](design/feature-store-ingestion-pipeline-overview.drawio.svg)
 
 The _Automated FS data ingestion component_ **(1)** is delivered as part of a broader product portfolio **(2)**, which can contain multiple products. In this solution we have only one product in the portfolio. Both the product (1) and the product portfolio (2) are defined by AWS CloudFormation templates. A CloudFormation template **(3)** with the product contains all resources, artifacts, and permissions, which are needed to provision the product in your SageMaker environment.
 
@@ -128,6 +128,16 @@ If you create and assign new IAM roles to resources created by the project provi
     - !Sub 'arn:aws:iam::${AWS::AccountId}:role/*StartIngestionPipeline*'
 ```
 
+The following diagram shows all the IAM roles involved and what service or resource assumes what role:
+
+![](design/feature-store-ingestion-pipeline-iam.drawio.svg)
+
+1. The SageMaker Service Catalog products launch role. This role calls `iam:PassRole` API on the SageMaker Service Catalog products use role (2) and the Lambda execution role (4) 
+2. The SageMaker Service Catalog products use role
+3. The SageMaker execution role. Studio notebooks use this role to access all resources, including S3 buckets
+4. The Lambda execution role. The Lambda function assumes this role
+5. The Lambda function [resource policy](https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html) allows EventBridge service to invoke the function
+
 Refer to [SageMaker Studio Permissions Required to Use Projects](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-projects-studio-updates.html) documentation for more details on SageMaker Studio permission setup for Projects.
 
 ### Project seed code
@@ -139,7 +149,7 @@ This solution delivers the seed code which contains a SageMaker pipeline definit
 A project goes via distinct life cycle stages: you create a project, you use it and its resources, and you optionally delete the project when you don't need it anymore.
 
 #### Create project
-To create a new SageMaker project, go to Studio **Components and registries**, and then select **Projects** from the dropdown list, choose **Create project**:
+To create a new SageMaker project, go to Studio **SageMaker resources**, and then select **Projects** from the dropdown list, choose **Create project**:
 
 <img src="img/studio-create-project.png" width="400"/>
 
@@ -236,7 +246,7 @@ Select **Create a new role** in **Permission** configuration. Review, amend if n
 ❗ You don't need to wait until Studio becomes available and can move on to the next deployment step.
 
 ### Deploy SageMaker project portfolio
-This solution includes a [SageMaker custom project template](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-projects-templates-custom.html) to demonstrate the usage of re-usable governed components in Studio, more specifically for automation of feature transformation and ingestion into the [SageMaker Feature Store](https://aws.amazon.com/sagemaker/feature-store/). This project template is delivered as [AWS Service Catalog](https://aws.amazon.com/servicecatalog/) product and available for usage in Studio **Components and registries** menu under **Projects**.
+This solution includes a [SageMaker custom project template](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-projects-templates-custom.html) to demonstrate the usage of re-usable governed components in Studio, more specifically for automation of feature transformation and ingestion into the [SageMaker Feature Store](https://aws.amazon.com/sagemaker/feature-store/). This project template is delivered as [AWS Service Catalog](https://aws.amazon.com/servicecatalog/) product and available for usage in Studio **SageMaker resources** menu under **Projects**.
 
 You must follow the following deployment steps to provision all necessary artifacts before starting Studio:
 
@@ -377,7 +387,7 @@ The delivered notebooks take you through the following implementation:
     - optional - create a Data Wrangler flow for data transformation and feature ingestion
     - create a feature group in Feature Store where features are stored
     - query the data from the feature group
-- [Feature Store ingest pipeline](notebooks/01-feature-store-ingest-pipeline.ipynb)
+- [Feature Store ingestion pipeline](notebooks/01-feature-store-ingest-pipeline.ipynb)
     - provision a SageMaker project with a data pipeline
     - explore the project resources
     - test the data pipeline by uploading new data into the monitored S3 bucket
@@ -402,7 +412,7 @@ aws iam detach-role-policy \
     --role-name  $SM_EXECUTION_ROLE_NAME \
     --policy-arn $SM_EXECUTION_ROLE_POLICY_ARN
 ```
-3. Delete the SageMaker product portfolio stack
+3. Delete the SageMaker product portfolio stack:
 ```sh
 aws cloudformation delete-stack --stack-name $SC_PORTFOLIO_STACK_NAME
 ```
@@ -428,3 +438,6 @@ The copy of the dataset is also available in the project folder [`dataset`](data
 - [GitHub public repository for Feature Store workshop](https://github.com/aws-samples/amazon-sagemaker-feature-store-end-to-end-workshop)
 - [GitHub public repository for Amazon SageMaker Drift Detection](https://github.com/aws-samples/amazon-sagemaker-drift-detection)
 - [Schedule an Amazon SageMaker Data Wrangler flow to process new data periodically using AWS Lambda functions](https://aws.amazon.com/blogs/machine-learning/schedule-an-amazon-sagemaker-data-wrangler-flow-to-process-new-data-periodically-using-aws-lambda-functions/)
+
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+SPDX-License-Identifier: MIT-0

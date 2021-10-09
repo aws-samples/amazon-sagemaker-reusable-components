@@ -146,3 +146,4 @@ samconfig.*
 *.pdf
 *snapshot.json
 .test*
+*.zip

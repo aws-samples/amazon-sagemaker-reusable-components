@@ -17,14 +17,19 @@ cd amazon-sagemaker-reusable-components
 S3_BUCKET_NAME=<your new S3 bucket name>
 aws s3 mb s3://${S3_BUCKET_NAME} --region $AWS_DEFAULT_REGION
 ```
+3. Create a source code zip file:
+```sh
+rm -f amazon-sagemaker-reusable-components.zip
+zip -r amazon-sagemaker-reusable-components.zip . -i "*.yaml" "*.yml" "*.sh"
+```
 
-3. Upload the source code zip file from the cloned repository [`amazon-sagemaker-reusable-components.zip`](https://github.com/aws-samples/amazon-sagemaker-reusable-components/-/blob/master/amazon-sagemaker-reusable-components.zip) to the S3 bucket:
+4. Upload the source code zip file from the cloned repository [`amazon-sagemaker-reusable-components.zip`](https://github.com/aws-samples/amazon-sagemaker-reusable-components/-/blob/master/amazon-sagemaker-reusable-components.zip) to the S3 bucket:
 ```sh
 S3_BUCKET_NAME=<your existing or just created S3 bucket name>
 aws s3 cp amazon-sagemaker-reusable-components.zip s3://${S3_BUCKET_NAME}/amazon-sagemaker-reusable-components/
 ```
 
-4. Deploy the CloudFormation template:
+5. Deploy the CloudFormation template:
 ```sh
 STACK_NAME=amazon-sagemaker-reusable-components-package-cfn
 aws cloudformation deploy \
@@ -35,7 +40,7 @@ aws cloudformation deploy \
         S3BucketName=$S3_BUCKET_NAME 
 ```
 
-5. Wait until deployment has finished and print the stack outputs with the following command (you may wait couple of minutes before the templates appear in the S3 bucket):
+6. Wait until deployment has finished and print the stack outputs with the following command (you may wait couple of minutes before the templates appear in the S3 bucket):
 ```sh
 aws cloudformation describe-stacks \
     --stack-name $STACK_NAME \
@@ -45,7 +50,7 @@ aws cloudformation describe-stacks \
 
 📜 **Save the output to your scratch pad for later use.**
 
-6. Check that the deployment templates are uploaded into the S3 bucket:
+7. Check that the deployment templates are uploaded into the S3 bucket:
 ```sh
 aws s3 ls s3://${S3_BUCKET_NAME}/amazon-sagemaker-reusable-components/ --recursive
 ```

@@ -428,7 +428,7 @@ wget -t inf http://archive.ics.uci.edu/ml/machine-learning-databases/abalone/aba
 wget -t inf http://archive.ics.uci.edu/ml/machine-learning-databases/abalone/abalone.names
 ```
 
-The copy of the dataset is also available in the project folder [`dataset`](dataset/abalone.data).
+The instructions, how to download and use the dataset, are provided in the [`00-setup` notebook](notebooks/00-setup.ipynb)
 
 # Resources
 - [Automate a centralized deployment of Amazon SageMaker Studio with AWS Service Catalog](https://aws.amazon.com/blogs/machine-learning/automate-a-centralized-deployment-of-amazon-sagemaker-studio-with-aws-service-catalog/)

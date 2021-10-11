@@ -224,9 +224,9 @@ To deploy the solution, you must have **Administrator** (or **Power User**) perm
 
 You must also have [AWS CLI](https://aws.amazon.com/cli/). If you do not have it, see [Installing, updating, and uninstalling the AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html). 
 
-Clone the solution [GitHub repository](https://gitlab.aws.dev/ilyiny/amazon-sagemaker-reusable-components) to your local development environment:
+Clone the solution [GitHub repository](https://github.com/aws-samples/amazon-sagemaker-reusable-components.git) to your local development environment:
 ```sh
-git clone git@ssh.gitlab.aws.dev:ilyiny/amazon-sagemaker-reusable-components.git
+git clone https://github.com/aws-samples/amazon-sagemaker-reusable-components.git
 cd amazon-sagemaker-reusable-components
 ```
 
@@ -357,14 +357,6 @@ To use the provided notebooks you must clone the source code repository into you
 Open a system terminal in Studio in the **Launcher** window:
 
 ![](img/studio-system-terminal.png)
-
-🚧 TEMPORARY 🚧  
-The code is in Amazon Gitlab. You cannot access the Gitlab repository from SageMaker Studio terminal.
-As a workaround, you must zip the code repository, upload file to Studio and unzip.  
-
-https://gitlab.aws.dev/ilyiny/amazon-sagemaker-reusable-components
-
-🚧 TEMPORARY 🚧
 
 Run the following command in the terminal:
 ```sh

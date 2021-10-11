@@ -1,5 +1,5 @@
 # Package CloudFormation templates
-Before you can deploy the delivered [CloudFormation templates](cfn-templates/), they need to be packaged and uploaded to an Amazon S3 bucket of your choice for deployment. There are two options how you can perform this preparation step.
+Before you can deploy the delivered [CloudFormation templates](cfn-templates/), they need to be packaged and uploaded to an Amazon S3 bucket of your choice for deployment. There are two options how you can perform this preparation step. The option 1 works in any development environment, Windows, Linux, or MacOS. The option 2 works only on Linux or MacOS.
 
 ## Option 1 - use a CloudFormation template to package and upload
 This option first deploys a simple CloudFormation template [`package-cfn.yaml`](package-cfn.yaml). The template creates a [CodeBuild](https://aws.amazon.com/codebuild/) project which packages and uploads the deployment templates into the specified S3 bucket.
@@ -40,7 +40,7 @@ aws cloudformation deploy \
         S3BucketName=$S3_BUCKET_NAME 
 ```
 
-6. Wait until deployment has finished and print the stack outputs with the following command (you may wait couple of minutes before the templates appear in the S3 bucket):
+6. Wait until deployment has finished and print the stack outputs with the following command (you may wait couple of minutes before the uploaded templates appear in the S3 bucket):
 ```sh
 aws cloudformation describe-stacks \
     --stack-name $STACK_NAME \

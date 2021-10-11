@@ -22,9 +22,9 @@ The following diagram shows the functional view of the workflow.
 ![](design/solution-functional-view.drawio.svg)
 
 On a high level, the workflow comprises the following steps:
-1. Data file or files uploaded to an Amazon S3 bucket
-2. Data processing and transformation process is launched 
-3. Extracted, processed, and transformed features are ingested into a designated [feature group](https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store-getting-started.html) in Feature Store
+1. An upstream data ingestion component uploads data file or files to an Amazon S3 bucket
+2. The data upload event launches a data processing and transformation process
+3. The data transformation process extracts, processes, and transforms features, and ingests them into a designated [feature group](https://docs.aws.amazon.com/sagemaker/latest/dg/feature-store-getting-started.html) in Feature Store
 
 ## Solution architecture
 The detailed component architecture of the solution is presented in the following diagram.
@@ -39,7 +39,7 @@ The SageMaker project implements the feature ingestion workflow **(5)**. The wor
 
 The following section provides implementation details for each part of the SageMaker project. You can use these instructions and code to develop your own ML component.
 
-## Authoring of SageMaker project template
+## Authoring a SageMaker project template
 To get started with a custom SageMaker project, you need the following resources, artifacts, IAM roles and permissions:
 - A CloudFormation template which defines a Service Catalog [portfolio](https://docs.aws.amazon.com/servicecatalog/latest/adminguide/what-is_concepts.html)
 - A CloudFormation template which defines a SageMaker project
@@ -112,7 +112,7 @@ The project template is self-sufficient and contains all resources needed to imp
 ### IAM roles and permissions
 To launch and use the SageMaker portfolio of products from AWS Service Catalog you need two IAM roles:
 - an IAM role to launch a SageMaker product from AWS Service Catalog
-- an IAM role to use resources created by a SageMaker product, such as a CodePipeline pipeline or an EventBridge rule. These resources assume this IAM role to fulfill their tasks.
+- an IAM role to use resources created by a SageMaker product, such as a CodePipeline pipeline or an EventBridge rule. These resources assume this IAM role to fulfill their tasks. By default, this role is also used to run a SageMaker pipeline, created by the project.
 
 When you enable SageMaker Projects for Studio users, two default IAM roles are created behind the scenes: `AmazonSageMakerServiceCatalogProductsLaunchRole` and `AmazonSageMakerServiceCatalogProductsUseRole`. These roles are global for your AWS account and used by the [SageMaker-provided Project templates](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-projects-templates-sm.html). You can use these roles for your custom SageMaker projects or you can create your own roles with a specific set of IAM permissions suited to your requirements.
 

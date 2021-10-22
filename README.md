@@ -236,7 +236,12 @@ aws iam detach-role-policy \
 ```sh
 aws cloudformation delete-stack --stack-name $SC_PORTFOLIO_STACK_NAME
 ```
-4. Delete the SageMaker Studio Domain.  
+4. If you used the provided CloudFormation package and deployment stack, delete it:
+```sh
+aws cloudformation delete-stack --stack-name amazon-sagemaker-reusable-components-package-cfn
+```
+
+5. Delete the SageMaker Studio Domain.  
 Refer to the detailed step-by-step instructions in the [Amazon SageMaker Developer Guide](https://docs.aws.amazon.com/sagemaker/latest/dg/gs-studio-delete-domain.html).
 
 

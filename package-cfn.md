@@ -20,7 +20,7 @@ aws s3 mb s3://${S3_BUCKET_NAME} --region $AWS_DEFAULT_REGION
 3. Create a source code zip file:
 ```sh
 rm -f amazon-sagemaker-reusable-components.zip
-zip -r amazon-sagemaker-reusable-components.zip . -i "*.yaml" "*.yml" "*.sh"
+zip -r amazon-sagemaker-reusable-components.zip . -x "build/*" "*.pdf" ".git/*" "img/*" "design/*" ".*"
 ```
 
 4. Upload the source code zip file `amazon-sagemaker-reusable-components.zip` to the S3 bucket:

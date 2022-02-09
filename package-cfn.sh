@@ -58,7 +58,8 @@ cp ${CFN_TEMPLATE_DIR}/*.yaml ${CFN_OUTPUT_DIR}
 # Zip the source code
 echo "Zipping the CloudFormation templates and buildspec files"
 rm -f ${SOURCE_CODE_ZIP_NAME}
-zip -r ${SOURCE_CODE_ZIP_NAME} . -i "*.yaml" "*.yml" "*.sh"
+#zip -r ${SOURCE_CODE_ZIP_NAME} . -i "*.yaml" "*.yml" "*.sh"
+zip -r ${SOURCE_CODE_ZIP_NAME} . -x "build/*" "*.pdf" ".git/*" "img/*" "design/*" ".*"
 
 ## Zip the MLOps project seed code for
 echo "Zipping MLOps project seed code"

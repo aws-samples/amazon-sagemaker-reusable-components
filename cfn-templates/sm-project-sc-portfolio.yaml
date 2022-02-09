@@ -179,3 +179,16 @@ Resources:
                 - 'cloudtrail:StopLogging'
               Resource:
                 - !Sub 'arn:aws:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/cloudtrail-sagemaker-*'
+            - Sid: FSIngestionLambdaPermissions
+              Effect: Allow
+              Action:
+                - lambda:AddPermission
+                - lambda:CreateFunction
+                - lambda:DeleteFunction
+                - lambda:GetFunction
+                - lambda:GetFunctionConfiguration
+                - lambda:InvokeFunction
+                - lambda:RemovePermission
+                - lambda:PutFunctionConcurrency
+              Resource:
+                - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:*StartIngestionPipeline*'

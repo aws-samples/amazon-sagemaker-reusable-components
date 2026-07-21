@@ -1,3 +1,8 @@
+
+> **⚠️ This repository is no longer maintained.**
+> This project is archived and no longer receiving updates or security patches.
+> If you wish to continue developing this code, we recommend you fork it.
+
 # Amazon SageMaker reusable components with SageMaker Projects
 This solution shows how to deliver reusable and self-contained ML components to [Amazon SageMaker](https://aws.amazon.com/pm/sagemaker) environment using [AWS Service Catalog](https://aws.amazon.com/servicecatalog/), [AWS CloudFormation](https://aws.amazon.com/cloudformation/), [SageMaker Projects](https://docs.aws.amazon.com/sagemaker/latest/dg/sagemaker-projects-whatis.html) and [SageMaker Pipelines](https://aws.amazon.com/sagemaker/pipelines/).
 
